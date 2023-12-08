@@ -1,13 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
+
 import Empleado from '@/interfaces/empleado.interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export default class EmpleadoService {
-  private serverUrl = 'assets/data/empleados.json'
+  private serverUrl = 'http://localhost:3000/empleados'
   private httpClient: HttpClient = inject(HttpClient);
 
   // Uso 'empleados' para manejar el array de los mismos dentro de la clase.
@@ -34,22 +35,33 @@ export default class EmpleadoService {
 
   addEmpleado(empleado: Empleado) {
     this.empleados.push(empleado);
-    
     this.empleadosSubject.next(this.empleados);
+
+    this.httpClient.post<Empleado>(this.serverUrl, empleado).subscribe();
   }
 
   udpateEmpleado(empleadoToUpdate: Empleado) {
     const targetEmpleadoIndex = this.empleados.findIndex(empleado => empleado.id === empleadoToUpdate.id);
-    targetEmpleadoIndex !== -1 && (this.empleados[targetEmpleadoIndex] = empleadoToUpdate);
+    if (targetEmpleadoIndex === -1) {
+      return;
+    }
 
+    this.empleados[targetEmpleadoIndex] = empleadoToUpdate;
     this.empleadosSubject.next(this.empleados);
+
+    this.httpClient.put<Empleado>(`${this.serverUrl}/${empleadoToUpdate.id}`, empleadoToUpdate).subscribe();
   }
 
   deleteEmpleado(id: number) {
     // Se usa el index del empleado porque su ID podría no coincidir con su index en el array.
     const targetEmpleadoIndex = this.empleados.findIndex(empleado => empleado.id === id);
-    targetEmpleadoIndex !== -1 && this.empleados.splice(targetEmpleadoIndex, 1);
+    if (targetEmpleadoIndex === -1) {
+      return;
+    }
 
+    this.empleados.splice(targetEmpleadoIndex, 1);
     this.empleadosSubject.next(this.empleados);
+
+    this.httpClient.delete(`${this.serverUrl}/${id}`).subscribe();
   }
 }
