@@ -1,0 +1,27 @@
+<form [formGroup]="empleadoForm" (ngSubmit)="handleSubmit()"
+    class="min-w-[50vw] flex flex-col gap-y-5 mat-elevation-z8 p-12 rounded-xl">
+    <mat-form-field>
+        <mat-label>Nombre:</mat-label>
+        <input value="{{ empleado?.name }}" matInput placeholder="Ejemplo: José" formControlName="name" required>
+        @if (empleadoForm.controls.name.invalid) {
+            <mat-error>{{ getErrorMessage(empleadoForm.controls.name) }}</mat-error>
+        }
+    </mat-form-field>
+    <mat-form-field>
+        <mat-label>Departamento:</mat-label>
+        <input value="{{ empleado?.department }}" matInput placeholder="Ejemplo: Contaduría"
+            formControlName="department" required>
+        @if (empleadoForm.controls.department.invalid) {
+        <mat-error>{{ getErrorMessage(empleadoForm.controls.department) }}</mat-error>
+        }
+    </mat-form-field>
+    <mat-form-field>
+        <mat-label>Puesto:</mat-label>
+        <input value="{{ empleado?.jobTitle }}" matInput placeholder="Ejemplo: Contador" formControlName="jobTitle"
+            required>
+        @if (empleadoForm.controls.jobTitle.invalid) {
+        <mat-error>{{ getErrorMessage(empleadoForm.controls.jobTitle) }}</mat-error>
+        }
+    </mat-form-field>
+    <button mat-raised-button color="primary" type="submit" [disabled]="!empleadoForm.valid">Enviar</button>
+</form>
