@@ -39,10 +39,6 @@ export default class EmpleadoService {
     return observer;
   }
 
-  private identidad<T>(arg: T): T {
-    return arg;
-  }
-
   getEmpleadosSubject(): BehaviorSubject<Empleado[]> {
     return this.empleadosSubject;
   }
