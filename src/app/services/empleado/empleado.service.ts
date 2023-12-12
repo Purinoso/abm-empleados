@@ -1,16 +1,18 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, ErrorObserver } from 'rxjs';
 
 import Empleado from '@/interfaces/empleado.interface';
+import SnackBarMessageService from '../snack-bar-message/snack-bar-message.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export default class EmpleadoService {
-  private serverUrl = 'http://localhost:3000/empleados'
   private httpClient: HttpClient = inject(HttpClient);
+  private snackBarMessageService: SnackBarMessageService = inject(SnackBarMessageService);
 
+  private serverUrl = 'http://localhost:3000/empleados'
   // Uso 'empleados' para manejar el array de los mismos dentro de la clase.
   private empleados: Empleado[] = [];
   // Uso 'empleadosSubject' para informar de los cambios a todos los observers que se suscriban a él en la aplicación.
@@ -18,11 +20,27 @@ export default class EmpleadoService {
 
   constructor() {
     const empleadosJsonObservable: Observable<Empleado[]> = this.httpClient.get<Empleado[]>(this.serverUrl);
+    
+    empleadosJsonObservable.subscribe(
+      this.getObserver(empleados => {
+        this.empleados = empleados;
+      })
+    );
 
-    empleadosJsonObservable.subscribe(empleados => {
-      this.empleados = empleados;
-      this.empleadosSubject.next(empleados);
-    });
+    this.empleadosSubject.next(this.empleados);
+  }
+
+  private getObserver<T>(next?: (value: T) => any) {
+    const observer: ErrorObserver<T> = {
+      next: next,
+      error: () => this.snackBarMessageService.showMessage('Ha ocurrido un error al conectarse a la base de datos')
+    };
+
+    return observer;
+  }
+
+  private identidad<T>(arg: T): T {
+    return arg;
   }
 
   getEmpleadosSubject(): BehaviorSubject<Empleado[]> {
@@ -37,7 +55,7 @@ export default class EmpleadoService {
     this.empleados.push(empleado);
     this.empleadosSubject.next(this.empleados);
 
-    this.httpClient.post<Empleado>(this.serverUrl, empleado).subscribe();
+    this.httpClient.post<Empleado>(this.serverUrl, empleado).subscribe(this.getObserver());
   }
 
   udpateEmpleado(empleadoToUpdate: Empleado) {
@@ -49,7 +67,7 @@ export default class EmpleadoService {
     this.empleados[targetEmpleadoIndex] = empleadoToUpdate;
     this.empleadosSubject.next(this.empleados);
 
-    this.httpClient.put<Empleado>(`${this.serverUrl}/${empleadoToUpdate.id}`, empleadoToUpdate).subscribe();
+    this.httpClient.put<Empleado>(`${this.serverUrl}/${empleadoToUpdate.id}`, empleadoToUpdate).subscribe(this.getObserver());
   }
 
   deleteEmpleado(id: number) {
@@ -62,6 +80,6 @@ export default class EmpleadoService {
     this.empleados.splice(targetEmpleadoIndex, 1);
     this.empleadosSubject.next(this.empleados);
 
-    this.httpClient.delete(`${this.serverUrl}/${id}`).subscribe();
+    this.httpClient.delete(`${this.serverUrl}/${id}`).subscribe(this.getObserver());
   }
 }
